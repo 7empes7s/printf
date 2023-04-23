@@ -21,15 +21,14 @@ int _printf(const char *format, ...)
         {'d', print_int},
         {'i', print_int},
         {'b', print_binary},
-        {'u', print_unsigned_int},
+        {'u', print_unsigned},
         {'o', print_octal},
         {'x', print_hex},
         {'X', print_hex_upper},
         {'p', print_address},
         {'r', print_reversed},
         {'R', print_rot13},
-        {0, NULL}
-    };
+        {0, NULL}};
 
     va_start(args, format);
     for (i = 0; format[i] != '\0'; i++)
@@ -38,71 +37,98 @@ int _printf(const char *format, ...)
         {
             i++;
             int k = 0;
-
-            // flags
+            int left_padding = 0;
+            int right_padding = 0;
             int precision = -1;
-            int width = -1;
-            int is_zero_padded = 0;
-            int is_left_justified = 0;
-            int is_space_signed = 0;
-            int is_plus_signed = 0;
-            int is_hash_flag_set = 0;
-            while (1)
+            int is_short = 0;
+            int is_long = 0;
+
+            if (format[i] == '-')
             {
-                if (format[i] == '-')
-                    is_left_justified = 1;
-                else if (format[i] == '+')
-                    is_plus_signed = 1;
-                else if (format[i] == ' ')
-                    is_space_signed = 1;
-                else if (format[i] == '0')
-                    is_zero_padded = 1;
-                else if (format[i] == '#')
-                    is_hash_flag_set = 1;
-                else
+                i++;
+                left_padding = 1;
+            }
+
+            if (format[i] == '0')
+            {
+                i++;
+                right_padding = 1;
+            }
+
+            while (format[i] >= '0' && format[i] <= '9')
+            {
+                if (precision == -1 && !left_padding)
+                    right_padding = 1;
+                precision = (precision * 10) + (format[i] - '0');
+                i++;
+            }
+
+            if (format[i] == 'h')
+            {
+                is_short = 1;
+                i++;
+            }
+
+            if (format[i] == 'l')
+            {
+                is_long = 1;
+                i++;
+            }
+
+            while (formats[k].type != 0)
+            {
+                if (formats[k].type == format[i])
+                {
+                    formats[k].func(args, buffer, &j, left_padding, right_padding, precision, is_short, is_long);
                     break;
-                i++;
-            }
-
-            // width
-            if (format[i] >= '1' && format[i] <= '9')
-            {
-                width = 0;
-                while (format[i] >= '0' && format[i] <= '9')
-                {
-                    width = width * 10 + (format[i] - '0');
-                    i++;
                 }
+                k++;
             }
-            else if (format[i] == '*')
+            if (formats[k].type == 0)
             {
-                width = va_arg(args, int);
-                i++;
+                buffer[j++] = format[i - 1];
+                buffer[j++] = format[i];
             }
+        }
+        else
+            buffer[j++] = format[i];
+    }
+    va_end(args);
 
-            // precision
-            if (format[i] == '.')
-            {
-                i++;
-                if (format[i] >= '0' && format[i] <= '9')
-                {
-                    precision = 0;
-                    while (format[i] >= '0' && format[i] <= '9')
-                    {
-                        precision = precision * 10 + (format[i] - '0');
-                        i++;
-                    }
-                }
-                else if (format[i] == '*')
-                {
-                    precision = va_arg(args, int);
-                    i++;
-                }
-                else
-                    precision = 0;
-            }
+    return write(1, buffer, j);
+}
 
-            // length modifier
-            int is_long_long_modifier = 0;
-            int is_long_modifier = 0;
-            int is_short
+// Print Functions
+
+int print_char(va_list args, char *buffer, int *j, int left_padding, int right_padding, int precision, int is_short, int is_long)
+{
+    char c = (char)va_arg(args, int);
+    int padding_amount = 0;
+
+    if (left_padding)
+    {
+        buffer[*j] = c;
+        (*j)++;
+    }
+
+    if (precision != -1)
+        padding_amount = precision - 1;
+
+    while (padding_amount > 0)
+    {
+        buffer[*j] = ' ';
+        (*j)++;
+        padding_amount--;
+    }
+
+    if (!left_padding)
+    {
+        buffer[*j] = c;
+        (*j)++;
+    }
+
+    return (1);
+}
+
+int print_str(va_list args, char *buffer, int *j, int left_padding, int right_padding, int precision, int is_short, int is_long)
+{
