@@ -3,11 +3,11 @@
 #include <stddef.h>
 #include <limits.h>
 
-/**
- * _printf - Custom printf function
- * @format: The format string
- * Return: The number of characters printed
- */
+int _putchar(char c)
+{
+    return write(1, &c, 1);
+}
+
 int _printf(const char *format, ...)
 {
     va_list args;
@@ -60,3 +60,15 @@ int _printf(const char *format, ...)
 
     return write(1, buffer, j);
 }
+
+// Print Functions
+
+int print_char(va_list args, char *buffer, int *j)
+{
+    buffer[*j] = (char)va_arg(args, int);
+    (*j)++;
+    return (1);
+}
+
+// Add the rest of the print functions here as described in the previous response.
+
