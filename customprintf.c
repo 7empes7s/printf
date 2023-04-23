@@ -20,15 +20,16 @@ int _printf(const char *format, ...)
         {'%', print_percent},
         {'d', print_int},
         {'i', print_int},
-        {'u', print_unsigned_int},
         {'b', print_binary},
+        {'u', print_unsigned_int},
         {'o', print_octal},
         {'x', print_hex},
-        {'X', print_hex},
+        {'X', print_hex_upper},
         {'p', print_address},
         {'r', print_reversed},
         {'R', print_rot13},
-        {0, NULL}};
+        {0, NULL}
+    };
 
     va_start(args, format);
     for (i = 0; format[i] != '\0'; i++)
@@ -38,37 +39,70 @@ int _printf(const char *format, ...)
             i++;
             int k = 0;
 
-            while (formats[k].type != 0)
+            // flags
+            int precision = -1;
+            int width = -1;
+            int is_zero_padded = 0;
+            int is_left_justified = 0;
+            int is_space_signed = 0;
+            int is_plus_signed = 0;
+            int is_hash_flag_set = 0;
+            while (1)
             {
-                if (formats[k].type == format[i])
-                {
-                    formats[k].func(args, buffer, &j);
+                if (format[i] == '-')
+                    is_left_justified = 1;
+                else if (format[i] == '+')
+                    is_plus_signed = 1;
+                else if (format[i] == ' ')
+                    is_space_signed = 1;
+                else if (format[i] == '0')
+                    is_zero_padded = 1;
+                else if (format[i] == '#')
+                    is_hash_flag_set = 1;
+                else
                     break;
-                }
-                k++;
+                i++;
             }
-            if (formats[k].type == 0)
+
+            // width
+            if (format[i] >= '1' && format[i] <= '9')
             {
-                buffer[j++] = format[i - 1];
-                buffer[j++] = format[i];
+                width = 0;
+                while (format[i] >= '0' && format[i] <= '9')
+                {
+                    width = width * 10 + (format[i] - '0');
+                    i++;
+                }
             }
-        }
-        else
-            buffer[j++] = format[i];
-    }
-    va_end(args);
+            else if (format[i] == '*')
+            {
+                width = va_arg(args, int);
+                i++;
+            }
 
-    return write(1, buffer, j);
-}
+            // precision
+            if (format[i] == '.')
+            {
+                i++;
+                if (format[i] >= '0' && format[i] <= '9')
+                {
+                    precision = 0;
+                    while (format[i] >= '0' && format[i] <= '9')
+                    {
+                        precision = precision * 10 + (format[i] - '0');
+                        i++;
+                    }
+                }
+                else if (format[i] == '*')
+                {
+                    precision = va_arg(args, int);
+                    i++;
+                }
+                else
+                    precision = 0;
+            }
 
-// Print Functions
-
-int print_char(va_list args, char *buffer, int *j)
-{
-    buffer[*j] = (char)va_arg(args, int);
-    (*j)++;
-    return (1);
-}
-
-// Add the rest of the print functions here as described in the previous response.
-
+            // length modifier
+            int is_long_long_modifier = 0;
+            int is_long_modifier = 0;
+            int is_short
