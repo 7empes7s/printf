@@ -3,48 +3,48 @@
 #include <stdio.h>
 
 /**
- * custom_printf - generates output based on given format
- * @fmt: format string containing characters and specifiers
- * Description: this function calls the fetch_print_function() that will
- * identify the appropriate printing function to use based on the conversion
- * specifiers within fmt
+ * _printf - produces output according to a format
+ * @format: format string containing the characters and the specifiers
+ * Description: this function will call the get_print() function that will
+ * determine which printing function to call depending on the conversion
+ * specifiers contained into fmt
  * Return: length of the formatted output string
  */
-int custom_printf(const char *fmt, ...)
+int _printf(const char *format, ...)
 {
-    int (*print_func)(va_list, flag_t *);
-    const char *ptr;
-    va_list args;
-    flag_t flags = {0, 0, 0};
+	int (*pfunc)(va_list, flags_t *);
+	const char *p;
+	va_list arguments;
+	flags_t flags = {0, 0, 0};
 
-    int char_count = 0;
+	register int count = 0;
 
-    va_start(args, fmt);
-    if (!fmt || (fmt[0] == '%' && !fmt[1]))
-        return (-1);
-    if (fmt[0] == '%' && fmt[1] == ' ' && !fmt[2])
-        return (-1);
-    for (ptr = fmt; *ptr; ptr++)
-    {
-        if (*ptr == '%')
-        {
-            ptr++;
-            if (*ptr == '%')
-            {
-                char_count += print_char('%');
-                continue;
-            }
-            while (check_flag(*ptr, &flags))
-                ptr++;
-            print_func = fetch_print_function(*ptr);
-            char_count += (print_func)
-                ? print_func(args, &flags)
-                : custom_printf("%%%c", *ptr);
-        }
-        else
-            char_count += print_char(*ptr);
-    }
-    print_char(-1);
-    va_end(args);
-    return (char_count);
+	va_start(arguments, format);
+	if (!format || (format[0] == '%' && !format[1]))
+		return (-1);
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
+		return (-1);
+	for (p = format; *p; p++)
+	{
+		if (*p == '%')
+		{
+			p++;
+			if (*p == '%')
+			{
+				count += _putchar('%');
+				continue;
+			}
+			while (get_flag(*p, &flags))
+				p++;
+			pfunc = get_print(*p);
+			count += (pfunc)
+				? pfunc(arguments, &flags)
+				: _printf("%%%c", *p);
+		} else
+			count += _putchar(*p);
+	}
+	_putchar(-1);
+	va_end(arguments);
+	return (count);
+
 }
